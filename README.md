@@ -42,7 +42,7 @@ The manual-switch sketch defaults to **D8 HIGH = Pi selected**. Measure the swit
 
 `server/fpgaloader.php` loads bitstreams over the Pi-to-Nexys USB JTAG cable using `openFPGALoader -b nexysVideo`. The reviewed Pi sources do not use GPIO. The HDMI button is independent of both Pi and Due outputs.
 
-`kiosk/index.htm` is a keypress tester. The menu links in `server/test.php` still need arrow/Start navigation and kiosk startup integration for the intended menu flow. The repository contains compiled game bitstreams without their HDL/XDC sources, so their LED, trackball, audio and NES timing compatibility must be checked separately. The trackball remains connected to the FPGA even while Pi video is selected.
+`server/index.php` is the game-selection kiosk, with arcade keyboard navigation and artwork from the CSV game library. `kiosk/index.htm` remains a separate keypress diagnostic. The repository contains compiled game bitstreams without their HDL/XDC sources, so their LED, trackball, audio and NES timing compatibility must be checked separately. The trackball remains connected to the FPGA even while Pi video is selected.
 
 ## Run the PHP web server on the Pi
 
@@ -64,7 +64,21 @@ From the repository root, start the web server:
 php -S 127.0.0.1:8000 -t server
 ```
 
-Leave that terminal running. Open **http://127.0.0.1:8000/test.php** in the Pi's browser. There is no default index page. Each game link requests `fpgaloader.php?name=FILENAME.bit`, and the loader runs `openFPGALoader -b nexysVideo` for that file. With this document root, the URL is `/fpgaloader.php`, without a `/server/` prefix. Stop the server with Ctrl+C. PHP's [`-S` and `-t` options](https://www.php.net/manual/en/features.commandline.webserver.php) provide this local web server and select its document root.
+Leave that terminal running. Open **http://127.0.0.1:8000/** in the Pi's browser; `server/index.php` is served automatically. Each game link requests `fpgaloader.php?name=FILENAME.bit`, and the loader runs `openFPGALoader -b nexysVideo` for that file. With this document root, the URL is `/fpgaloader.php`, without a `/server/` prefix. Stop the server with Ctrl+C. PHP's [`-S` and `-t` options](https://www.php.net/manual/en/features.commandline.webserver.php) provide this local web server and select its document root.
+
+The menu uses the cabinet's black, red and orange styling, large game titles, and a rounded highlight for the current selection. The first game starts selected; navigation wraps at either end. Mouse/touch clicks and standard Tab/Enter navigation also work. The page uses local CSS, JavaScript, images and system fonts, with no CDN dependency.
+
+![Arcade game-selection kiosk](design/previews/kiosk-menu.png)
+
+| Arcade control | Due keyboard key | Menu action |
+| --- | --- | --- |
+| Up / Left | ArrowUp / ArrowLeft | Previous game |
+| Down / Right | ArrowDown / ArrowRight | Next game |
+| A / B | `a` / `b` | Follow the selected game's loader link |
+| Select | Space | Follow the selected game's loader link |
+| Start | Enter | Follow the selected game's loader link |
+
+Either player's controls work with the manual-switch Due sketch. Holding a launch button does not repeatedly activate the link. Loading follows the existing `fpgaloader.php` page, which displays programming output; use the browser's Back command to return to the menu. The silver button still switches HDMI independently.
 
 For a direct load of an existing game, visit:
 
@@ -132,10 +146,11 @@ python3 tools/build_realistic.py
 python3 tools/build_ja_port.py
 python3 tools/validate_design.py
 python3 tools/test_due_firmware.py
+python3 tools/test_kiosk_catalog.py
 inkscape design/previews/04-realistic-breadboard.svg --export-type=png --export-filename=design/previews/04-realistic-breadboard.png --export-width=2800
 inkscape design/previews/ja-port.svg --export-type=png --export-filename=design/previews/ja-port.png --export-width=1800
 ```
 
 The builders regenerate all four native sketches, SVG previews, endpoint metadata and custom parts. Generated raw `.fz` files and `design/parts/` are ignored because the `.fzz` sketches embed their parts.
 
-The validator checks archive/SVG integrity, reciprocal connector links, upstream pin compatibility, supply separation and manual-switch routing. Firmware tests run against mocked Arduino and Keyboard APIs; they do not establish SAM3X interrupt timing or compile for the actual Due board. Native Fritzing application opening/export and hardware behavior remain unverified.
+The validator checks archive/SVG integrity, reciprocal connector links, upstream pin compatibility, supply separation and manual-switch routing. Firmware tests run against mocked Arduino and Keyboard APIs; they do not establish SAM3X interrupt timing or compile for the actual Due board. The kiosk catalog tests require PHP CLI and check CSV handling, HTML escaping and empty/error states without programming hardware. Native Fritzing application opening/export and hardware behavior remain unverified.

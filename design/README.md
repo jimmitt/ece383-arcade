@@ -150,7 +150,7 @@ openFPGALoader -b nexysVideo /absolute/path/to/game.bit
 
 This is volatile loading; do not add `-f` for ordinary menu launches. The silver button selects displayed video manually; neither Pi nor Due toggles it. Source: [repository loader](https://github.com/USAFA-ECE/ece383-arcade/blob/40c9750e68a3fcec678eb5b699f36182dd5195eb/server/fpgaloader.php).
 
-The repository's `kiosk/index.htm` is a keypress tester, not a working bitstream menu. `server/test.php` displays links but has no arrow-key/Start menu navigation or kiosk startup setup. The desired kiosk application still needs that integration. See the compatibility review.
+`server/index.php` now provides the full-page game menu: Up/Left and Down/Right browse, while A, B, Select (Space), or Start (Enter) follows the highlighted game's loader link. `kiosk/index.htm` remains a keypress diagnostic. Start PHP with `server/` as its document root and open the root URL; see the root README for setup. Automatic kiosk startup is still a separate setup task.
 
 The [3 inch RetroArcade.us trackball](https://www.amazon.com/dp/B0711TKGFV) stays on Nexys USB HOST J15. Digilent's host translates supported USB mouse events into PS/2 clock/data; a bitstream must initialize and decode that interface. The exact device's compatibility remains a bench check. Trackball input always goes to the FPGA, as physically requested; only Due-connected controls change destination. No USB hub is shown. [Nexys Video reference manual](https://digilent.com/reference/_media/reference/programmable-logic/nexys-video/nexys-video_rm.pdf)
 

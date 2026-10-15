@@ -42,7 +42,7 @@ The proposed local implementation is `reference/arcade_due_manual_switch/arcade_
 
 [Pi-side files](https://github.com/USAFA-ECE/ece383-arcade/tree/40c9750e68a3fcec678eb5b699f36182dd5195eb/server) use `openFPGALoader -b nexysVideo`. The required physical paths are Pi USB host -> Due Native USB, Pi USB host -> Nexys PROG/JTAG, and Pi HDMI -> switch. No BCM/physical GPIO pin assignments appear in the reviewed Pi web/server sources. The realistic view uses representative Pi 4B artwork; the actual Pi model remains unspecified.
 
-[kiosk/index.htm](https://github.com/USAFA-ECE/ece383-arcade/blob/40c9750e68a3fcec678eb5b699f36182dd5195eb/kiosk/index.htm) displays the most recent key press. It is not a working game-selection kiosk. `server/test.php` generates game links, but supplies no joystick arrow/Start navigation logic or kiosk startup setup. The Due emits arrow keys, `a`, `b`, Enter and Space, matching upstream; the Pi application still needs to handle those keys for the desired menu behavior. Neither the Pi nor revised Due drives the HDMI switch.
+At the reviewed upstream commit, [kiosk/index.htm](https://github.com/USAFA-ECE/ece383-arcade/blob/40c9750e68a3fcec678eb5b699f36182dd5195eb/kiosk/index.htm) is a keypress diagnostic, and `server/test.php` supplies game links without arcade navigation. This branch replaces that menu with `server/index.php`, served at the root URL: Up/Left selects the previous game, Down/Right the next, and A, B, Select (Space), or Start (Enter) follows the selected loader link. These keys match the Due firmware. The diagnostic is preserved, and automatic kiosk startup remains a separate setup task. Neither the Pi nor revised Due drives the HDMI switch.
 
 ## Limits and unresolved compatibility
 

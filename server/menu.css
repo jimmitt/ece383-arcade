@@ -1,0 +1,139 @@
+:root {
+    color-scheme: dark;
+    --orange: #ff923b;
+    --red: #e43a32;
+    --muted: #a49e98;
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+    background: #050505;
+    color: #fff5ec;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 280px; }
+.kiosk {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(24px, 4vh, 52px) clamp(24px, 6vw, 110px) clamp(26px, 4vh, 48px);
+}
+/* The cabinet's parallel sunset bands, without external image/font requests. */
+.cabinet-stripes {
+    position: fixed;
+    z-index: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 15px;
+    pointer-events: none;
+    background: linear-gradient(to bottom,
+        #ffad46 0 2px, transparent 2px 5px,
+        #ff7735 5px 8px, transparent 8px 11px,
+        #d72f2c 11px 15px);
+}
+.masthead, .brand, .library-heading, .controls, .control-hint, .preview-caption { display: flex; align-items: center; }
+.masthead { justify-content: space-between; gap: 20px; }
+.brand { gap: 12px; font-size: 19px; font-weight: 850; letter-spacing: .11em; }
+.brand-department { color: var(--muted); font-weight: 500; }
+.brand-mark {
+    width: 39px;
+    height: 27px;
+    background: linear-gradient(to bottom,
+        #ffad46 0 4px, transparent 4px 8px,
+        #ff7735 8px 12px, transparent 12px 16px,
+        #d72f2c 16px 20px, transparent 20px 24px,
+        #a72225 24px 27px);
+    transform: skewX(-18deg);
+}
+.masthead-label { font-size: 12px; color: var(--muted); letter-spacing: .25em; }
+main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-block: 46px; }
+.intro { margin-bottom: clamp(24px, 4vh, 48px); }
+.eyebrow { margin: 0 0 15px; color: var(--orange); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .2em; }
+h1 { margin: 0; font-size: clamp(34px, 4.6vw, 76px); font-weight: 750; line-height: 1.08; letter-spacing: -.045em; }
+.accent { color: var(--red); }
+.library { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 100px); align-items: center; }
+.library-heading { justify-content: space-between; padding: 0 23px 16px; font-size: 11px; font-weight: 650; color: var(--muted); letter-spacing: .17em; text-transform: uppercase; }
+.game-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.game-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2vw, 30px);
+    padding: clamp(20px, 2.6vh, 32px) 23px;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    text-decoration: none;
+    color: #aaa49f;
+    outline: none;
+    transition: background 130ms ease, color 130ms ease, border-color 130ms ease;
+}
+.game-title { font-size: clamp(29px, 3.6vw, 60px); font-weight: 700; line-height: 1.14; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.game-number { min-width: 20px; font-size: 13px; letter-spacing: .06em; color: #6f6965; }
+.play-arrow { margin-left: auto; font-size: 29px; color: var(--orange); opacity: 0; }
+.game-link.is-selected, .game-link:focus-visible { color: #fff8f1; background: #211813; border-color: #79462a; }
+.game-link.is-selected::before, .game-link:focus-visible::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 24%;
+    bottom: 24%;
+    width: 4px;
+    border-radius: 4px;
+    background: linear-gradient(var(--orange), var(--red));
+}
+.game-link.is-selected .game-number { color: var(--orange); }
+.game-link.is-selected .play-arrow { opacity: 1; }
+.game-link:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.game-preview { min-width: 0; padding-top: 26px; }
+.artwork { position: relative; width: 100%; height: clamp(240px, 39vh, 470px); display: grid; place-items: center; overflow: hidden; background: #10100f; border-radius: 20px; border: 1px solid #28221e; padding: 22px; }
+.artwork::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 19px;
+    background: linear-gradient(to bottom, #ffad46 0 3px, #10100f 3px 7px, #ff7735 7px 11px, #10100f 11px 15px, #d72f2c 15px 19px);
+}
+.artwork img { position: relative; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.artwork-placeholder { display: none; color: var(--orange); font-size: clamp(16px, 2.5vw, 36px); font-weight: 800; letter-spacing: .08em; }
+.artwork[data-empty="true"] .artwork-placeholder { display: block; }
+[hidden] { display: none !important; }
+.preview-caption { gap: 10px; margin-top: 17px; font-size: 13px; color: #c7bdb3; }
+.ready-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--orange); }
+.game-description { margin: 12px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.game-description:empty { display: none; }
+.controls { gap: 30px; flex-wrap: wrap; border-top: 1px solid #29211c; padding-top: 23px; color: #c9c1ba; font-size: 13px; }
+.control-hint { gap: 9px; flex-wrap: wrap; }
+.control-hint > span:last-child { margin-left: 5px; }
+.direction-keys { font-size: 22px; color: var(--orange); letter-spacing: .08em; }
+.button-key { width: 25px; height: 25px; display: inline-grid; place-items: center; border: 1px solid #87502d; border-radius: 50%; color: var(--orange); font-size: 12px; font-weight: 750; }
+.text-key { color: #f4e0cd; font-size: 11px; padding: 5px 7px; border: 1px solid #544034; border-radius: 6px; }
+.footer-label { margin-left: auto; color: #8d8179; font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
+.empty-state { padding: 42px 0; }
+.empty-state h2 { font-size: 32px; }
+.empty-state p, .noscript-note { color: var(--muted); line-height: 1.6; }
+@media (max-width: 760px) {
+    main { padding-block: 36px; }
+    .library { grid-template-columns: 1fr; gap: 24px; }
+    .game-preview { padding-top: 0; }
+    .artwork { height: 240px; }
+    .game-title { font-size: clamp(27px, 6vw, 46px); }
+    .game-link { padding-block: 20px; }
+    .controls { gap: 18px; }
+    .footer-label { display: none; }
+}
+@media (min-width: 761px) and (max-height: 680px) {
+    .kiosk { padding-block: 24px; }
+    main { padding-block: 24px; }
+    .intro { margin-bottom: 22px; }
+    h1 { font-size: 42px; }
+    .game-link { padding-block: 17px; }
+    .game-title { font-size: 36px; }
+    .artwork { height: 240px; }
+    .controls { padding-top: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+}
