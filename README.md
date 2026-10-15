@@ -74,11 +74,15 @@ The menu uses the cabinet's black, red and orange styling, large game titles, an
 | --- | --- | --- |
 | Up / Left | ArrowUp / ArrowLeft | Previous game |
 | Down / Right | ArrowDown / ArrowRight | Next game |
-| A / B | `a` / `b` | Follow the selected game's loader link |
-| Select | Space | Follow the selected game's loader link |
-| Start | Enter | Follow the selected game's loader link |
+| A / B | `a` / `b` | Load the selected game in the background |
+| Select | Space | Load the selected game in the background |
+| Start | Enter | Load the selected game in the background |
 
-Either player's controls work with the manual-switch Due sketch. Holding a launch button does not repeatedly activate the link. Loading follows the existing `fpgaloader.php` page, which displays programming output; use the browser's Back command to return to the menu. The silver button still switches HDMI independently.
+Either player's controls work with the manual-switch Due sketch. Selecting a game sends a background request to `fpgaloader.php` while the menu stays visible behind a loading dialog. The loader returns JSON with success/failure based on openFPGALoader's exit code. Success tells the user to switch the display to FPGA with the silver button; failure reports that loading was unsuccessful. Both result dialogs wait for a fresh keypress (or the Continue button) before returning to the same menu selection. Holding the launch button or pressing buttons while loading does not dismiss the result or start another load.
+
+[Successful-load dialog preview](design/previews/kiosk-load-success.png).
+
+The silver button still switches HDMI independently. After selecting FPGA video, the Due routes arcade inputs to the FPGA, so the Pi's result dialog remains until it receives a key again (for example, after switching back to Pi video).
 
 For a direct load of an existing game, visit:
 
@@ -86,15 +90,15 @@ For a direct load of an existing game, visit:
 http://127.0.0.1:8000/fpgaloader.php?name=C25Dutt_FinalProject_Mario.bit
 ```
 
-That URL immediately reprograms the FPGA. The loader resolves filenames relative to **`server/bitstreams/`**. New games need a `.bit` file there and a row in `server/bitstreams.csv`; the column order is `Title,Bitstream File Name,Picture File Name,Description`. Put optional pictures in `server/images/`. Use simple filenames such as `my_game.bit` with letters, numbers, underscores and periods, because the current loader constructs a shell command from the name.
+That URL immediately reprograms the FPGA and displays a standalone HTML result with programmer output. The loader resolves filenames relative to **`server/bitstreams/`** and quotes the path as one shell argument. New games need a `.bit` file there and a row in `server/bitstreams.csv`; the column order is `Title,Bitstream File Name,Picture File Name,Description`. Put optional pictures in `server/images/`.
 
-The page shows the programmer's output. If loading fails, run the same command as the PHP user to see the underlying error:
+The standalone loader page shows the programmer's output. If loading fails, run the same command as the PHP user to see the underlying error:
 
 ```sh
 openFPGALoader -b nexysVideo server/bitstreams/C25Dutt_FinalProject_Mario.bit
 ```
 
-If PHP reports `shell_exec` is disabled or undefined, check `php --ini` and the CLI configuration's `disable_functions`; the loader requires `shell_exec` and `openFPGALoader` in PHP's inherited `PATH`. The command loads volatile FPGA configuration memory; it must be repeated after power loss. See [openFPGALoader first steps](https://trabucayre.github.io/openFPGALoader/guide/first-steps.html#programming-a-development-board).
+If the programmer is unavailable, check `php --ini` and the CLI configuration's `disable_functions`; the loader requires PHP's `exec` function and `openFPGALoader` in PHP's inherited `PATH`. The command loads volatile FPGA configuration memory; it must be repeated after power loss. See [openFPGALoader first steps](https://trabucayre.github.io/openFPGALoader/guide/first-steps.html#programming-a-development-board).
 
 The loopback binding is for the browser running on the Pi. Keep this unauthenticated FPGA-programming endpoint local to the cabinet; PHP's built-in server is intended for development and controlled demonstrations. It must be running before the kiosk browser opens the menu. This command starts it manually and does not install a boot service.
 
@@ -147,10 +151,11 @@ python3 tools/build_ja_port.py
 python3 tools/validate_design.py
 python3 tools/test_due_firmware.py
 python3 tools/test_kiosk_catalog.py
+python3 tools/test_fpga_loader.py
 inkscape design/previews/04-realistic-breadboard.svg --export-type=png --export-filename=design/previews/04-realistic-breadboard.png --export-width=2800
 inkscape design/previews/ja-port.svg --export-type=png --export-filename=design/previews/ja-port.png --export-width=1800
 ```
 
 The builders regenerate all four native sketches, SVG previews, endpoint metadata and custom parts. Generated raw `.fz` files and `design/parts/` are ignored because the `.fzz` sketches embed their parts.
 
-The validator checks archive/SVG integrity, reciprocal connector links, upstream pin compatibility, supply separation and manual-switch routing. Firmware tests run against mocked Arduino and Keyboard APIs; they do not establish SAM3X interrupt timing or compile for the actual Due board. The kiosk catalog tests require PHP CLI and check CSV handling, HTML escaping and empty/error states without programming hardware. Native Fritzing application opening/export and hardware behavior remain unverified.
+The validator checks archive/SVG integrity, reciprocal connector links, upstream pin compatibility, supply separation and manual-switch routing. Firmware tests run against mocked Arduino and Keyboard APIs; they do not establish SAM3X interrupt timing or compile for the actual Due board. The kiosk catalog tests require PHP CLI and check CSV handling, HTML escaping and empty/error states. Loader tests use a fake programmer to verify exit-status handling, path quoting and error responses without programming hardware. Native Fritzing application opening/export and hardware behavior remain unverified.

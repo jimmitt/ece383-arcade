@@ -94,5 +94,12 @@ $first = $games[0] ?? null;
         </footer>
         <noscript><p class="noscript-note">Use Tab to choose a game and Enter to play. Arcade navigation requires JavaScript.</p></noscript>
     </div>
+    <dialog class="load-dialog" id="load-dialog" aria-labelledby="load-title" aria-describedby="load-message">
+        <div class="load-symbol" id="load-symbol" aria-hidden="true"></div>
+        <h2 id="load-title">Loading game</h2>
+        <p id="load-message" role="status">Please wait while the FPGA is loaded.</p>
+        <p class="continue-hint" id="continue-hint" hidden>Press any key to return to the menu.</p>
+        <button id="continue-button" type="button" hidden>Continue <span aria-hidden="true">↗</span></button>
+    </dialog>
 </body>
 </html>

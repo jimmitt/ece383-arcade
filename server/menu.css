@@ -114,6 +114,17 @@ h1 { margin: 0; font-size: clamp(34px, 4.6vw, 76px); font-weight: 750; line-heig
 .empty-state { padding: 42px 0; }
 .empty-state h2 { font-size: 32px; }
 .empty-state p, .noscript-note { color: var(--muted); line-height: 1.6; }
+.load-dialog { width: min(600px, calc(100% - 40px)); padding: clamp(28px, 5vw, 56px); border: 1px solid #80512e; border-radius: 24px; background: #17110e; color: #fff5ec; box-shadow: 0 30px 100px #000b; }
+.load-dialog::backdrop { background: #000c; backdrop-filter: blur(6px); }
+.load-dialog h2 { margin: 26px 0 16px; font-size: clamp(30px, 4vw, 48px); letter-spacing: -.035em; line-height: 1.1; }
+.load-dialog p { font-size: 19px; line-height: 1.55; color: #d6c8bc; }
+.load-dialog .continue-hint { margin-top: 30px; font-size: 14px; color: var(--orange); }
+.load-symbol { width: 34px; height: 34px; border: 3px solid #573822; border-top-color: var(--orange); border-radius: 50%; animation: loading-spin 900ms linear infinite; }
+.load-dialog[data-state="success"] .load-symbol, .load-dialog[data-state="failure"] .load-symbol { display: grid; place-items: center; border: 1px solid var(--orange); animation: none; width: 44px; height: 44px; color: var(--orange); font-size: 26px; }
+.load-dialog[data-state="failure"] .load-symbol { border-color: var(--red); color: #ff7b6c; }
+#continue-button { cursor: pointer; margin-top: 7px; padding: 14px 22px; display: flex; gap: 40px; align-items: center; border: 1px solid #9b6034; border-radius: 10px; background: #3a2418; color: #fff5ec; font: inherit; font-weight: 700; }
+#continue-button:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
     main { padding-block: 36px; }
     .library { grid-template-columns: 1fr; gap: 24px; }
@@ -135,5 +146,5 @@ h1 { margin: 0; font-size: clamp(34px, 4.6vw, 76px); font-weight: 750; line-heig
     .controls { padding-top: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; scroll-behavior: auto !important; }
+    * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
