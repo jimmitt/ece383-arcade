@@ -1,0 +1,18 @@
+[Unit]
+Description=ARCADE local PHP game menu and FPGA loader
+After=local-fs.target
+
+[Service]
+Type=simple
+# FullPageOS defaults to pi. Set this to the account with USB-JTAG access.
+User=pi
+WorkingDirectory=/opt/arcade/server
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/php -S 127.0.0.1:8000 -t /opt/arcade/server
+ExecStartPost=/usr/bin/curl --fail --silent --show-error --output /dev/null --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

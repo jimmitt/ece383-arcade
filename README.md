@@ -100,7 +100,115 @@ openFPGALoader -b nexysVideo server/bitstreams/C25Dutt_FinalProject_Mario.bit
 
 If the programmer is unavailable, check `php --ini` and the CLI configuration's `disable_functions`; the loader requires PHP's `exec` function and `openFPGALoader` in PHP's inherited `PATH`. The command loads volatile FPGA configuration memory; it must be repeated after power loss. See [openFPGALoader first steps](https://trabucayre.github.io/openFPGALoader/guide/first-steps.html#programming-a-development-board).
 
-The loopback binding is for the browser running on the Pi. Keep this unauthenticated FPGA-programming endpoint local to the cabinet; PHP's built-in server is intended for development and controlled demonstrations. It must be running before the kiosk browser opens the menu. This command starts it manually and does not install a boot service.
+The loopback binding is for the browser running on the Pi. Keep this unauthenticated FPGA-programming endpoint local to the cabinet; PHP's built-in server is intended for development and controlled demonstrations. The command above starts it manually; the FullPageOS setup below makes it automatic at boot.
+
+## Install on FullPageOS and start automatically
+
+Run these commands **on the Raspberry Pi**, in a terminal or SSH session. FullPageOS supplies the full-screen Chromium startup; this repository supplies the local PHP menu and its systemd service. Use PHP **8.0 or newer**. The examples assume the FullPageOS account is `pi`; if yours differs, use that account's home directory and change `User=pi` in the service before starting it.
+
+### Place the complete web application on the Pi
+
+From your checkout of this branch, install the dependencies and copy the **contents of `server/`** into `/opt/arcade/server/`:
+
+```sh
+sudo apt update
+sudo apt install php-cli openfpgaloader curl
+php -v
+cd ~/ece383-arcade
+sudo install -d -m 0755 /opt/arcade/server
+sudo cp -a server/. /opt/arcade/server/
+```
+
+If you are copying from another computer instead, transfer the whole `server/` folder to the Pi first, then install its contents at the same destination. Keep this directory layout:
+
+```text
+/opt/arcade/server/
+├── index.php          # Default kiosk page: http://127.0.0.1:8000/
+├── fpgaloader.php      # Background programming endpoint
+├── menu.css
+├── menu.js
+├── bitstreams.csv
+├── bitstreams/         # Packaged .bit files
+└── images/             # Game artwork named in the CSV
+```
+
+Place **`index.php` at `/opt/arcade/server/index.php`**, alongside the loader and assets. Copying only `index.php`, putting it in the boot partition, or opening it as a `file://` URL will not run the PHP application. This setup serves `/opt/arcade/server` directly on port 8000; it does not require copying anything to `/var/www/html` or changing FullPageOS's existing port-80 server/dashboard.
+
+### Enable the PHP boot service
+
+The included [arcade-php.service](deploy/arcade-php.service) runs PHP as `pi`, sets its document root and programmer search path, checks the local URL at startup, and restarts PHP if the process fails. Ensure this service account has the USB-JTAG permissions described above; being able to program as a different SSH user does not establish access for `pi`.
+
+Stop any manually started PHP server on port 8000 with Ctrl+C, then install the unit:
+
+```sh
+cd ~/ece383-arcade
+sudo install -m 0644 deploy/arcade-php.service /etc/systemd/system/arcade-php.service
+```
+
+If the login/programmer account is not `pi`, edit `/etc/systemd/system/arcade-php.service` now and replace `User=pi`. If PHP or openFPGALoader was installed outside the package-manager locations, also adjust `ExecStart` or `Environment=PATH` as needed. Then validate, enable and start it:
+
+```sh
+sudo systemd-analyze verify /etc/systemd/system/arcade-php.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now arcade-php.service
+systemctl is-enabled arcade-php.service
+systemctl is-active arcade-php.service
+curl --fail --silent --show-error http://127.0.0.1:8000/ -o /dev/null
+```
+
+The expected service answers are `enabled` and `active`; curl should exit successfully. The service uses `/usr/bin/php` and `/usr/bin/curl` from the installed packages. Its unit follows systemd's [service configuration](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html); starting the unit checks the HTTP menu, not the FPGA's USB connection. Test an actual game load separately.
+
+### Make FullPageOS open the local menu at boot
+
+FullPageOS reads its browser URL from `/boot/firmware/fullpageos.txt` on current images; older images use `/boot/fullpageos.txt`. Select the existing file, save its previous contents, and write the local URL as a single line:
+
+```sh
+arcade_boot_dir=
+if [ -f /boot/firmware/fullpageos.txt ]; then
+    arcade_boot_dir=/boot/firmware
+elif [ -f /boot/fullpageos.txt ]; then
+    arcade_boot_dir=/boot
+else
+    echo 'FullPageOS URL file not found; check that this Pi is running FullPageOS.' >&2
+fi
+if [ -n "$arcade_boot_dir" ]; then
+    sudo cp "$arcade_boot_dir/fullpageos.txt" "$arcade_boot_dir/fullpageos.txt.arcade-backup"
+    printf '%s\n' 'http://127.0.0.1:8000/' | sudo tee "$arcade_boot_dir/fullpageos.txt"
+    printf '%s\n' 'enabled' | sudo tee "$arcade_boot_dir/check_for_httpd"
+fi
+```
+
+Writing `enabled` into `check_for_httpd` makes the FullPageOS launcher wait for its configured URL before opening Chromium. Setting the menu URL directly bypasses the rotating FullPageDashboard. See the [FullPageOS setup reference](https://github.com/guysoft/FullPageOS#features) and its [browser-launch loop](https://github.com/guysoft/FullPageOS/blob/devel/src/modules/fullpageos/filesystem/opt/custompios/scripts/run_onepageos). The PHP systemd service starts independently at boot; no extra Chromium command or second browser autostart entry is needed.
+
+Once the URL files have been updated successfully, reboot:
+
+```sh
+sudo reboot
+```
+
+After reboot, the full-screen menu should appear without an SSH terminal or manual `php -S` command. Confirm a game loads, the result dialog appears, and the silver HDMI button switches the display as expected. Hardware behavior still needs to be checked on the actual cabinet.
+
+### Update or troubleshoot the installed menu
+
+Editing the source checkout does not update the deployed copy. After pulling changes to the checkout, copy the server files again and restart the service:
+
+```sh
+cd ~/ece383-arcade
+sudo cp -a server/. /opt/arcade/server/
+sudo systemctl restart arcade-php.service
+```
+
+Add new game files to `/opt/arcade/server/bitstreams/`, update `/opt/arcade/server/bitstreams.csv`, and put their artwork under `/opt/arcade/server/images/`. Keep those additions in your source checkout as well if you want the next deployment to include them.
+
+For a blank page, connection error, or loader failure:
+
+```sh
+systemctl status arcade-php.service --no-pager
+journalctl -u arcade-php.service -b --no-pager -n 80
+curl --fail --silent --show-error http://127.0.0.1:8000/ -o /dev/null
+```
+
+Check the service's `User`, USB permissions, PHP version, `exec` availability, and whether another process already owns port 8000. If you change the unit file, run `sudo systemctl daemon-reload` before restarting. To stop automatic PHP startup, use `sudo systemctl disable --now arcade-php.service`; restore the backed-up FullPageOS URL before rebooting if you want its previous page back.
 
 ## Package an ELF inside a bitstream
 
